@@ -1,0 +1,66 @@
+﻿@model List<SistemaUniversitarioWeb.Models.Materia>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Carrera</th>
+            <th>Semestre</th>
+            <th>Código</th>
+            <th>Horas</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Count > 0)
+        {
+            foreach (var materia in Model)
+            {
+                <tr data-id="@materia.Id">
+                    <!-- Nombre -->
+                    <td>
+                        <span class="view-mode">@materia.Nombre</span>
+                        @Html.TextBox("Nombre", materia.Nombre, new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Carrera -->
+                    <td>
+                        <span class="view-mode">@materia.Carrera</span>
+                        @Html.DropDownList("Carrera", ViewBag.Carreras as SelectList, "-- Selecciona --", new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Semestre -->
+                    <td>
+                        <span class="view-mode">@materia.Semestre</span>
+                        @Html.DropDownList("Semestre", ViewBag.Semestres as SelectList, "-- Selecciona --", new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Código -->
+                    <td>
+                        <span class="view-mode">@materia.Codigo</span>
+                        @Html.TextBox("Codigo", materia.Codigo, new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Horas -->
+                    <td>
+                        <span class="view-mode">@materia.Horas</span>
+                        @Html.TextBox("Horas", materia.Horas, new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Acciones -->
+                    <td>
+                        <button class="btn btn-warning btn-sm btn-edit">Editar</button>
+                        <button class="btn btn-success btn-sm btn-save" style="display:none;">Guardar</button>
+                        <button class="btn btn-danger btn-sm btn-delete">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="6" class="text-center">No se encontraron materias.</td>
+            </tr>
+        }
+    </tbody>
+</table>

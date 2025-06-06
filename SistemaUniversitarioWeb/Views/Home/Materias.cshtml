@@ -1,30 +1,180 @@
 ﻿@model List<SistemaUniversitarioWeb.Models.Materia>
 @{
     ViewBag.Title = "Materias - Ingeniería Civil";
+    var nombres = ViewBag.NombresDisponibles as List<string>;
+    var carreras = ViewBag.CarrerasDisponibles as List<string>;
+}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
 }
 
-<h2>Materias - Ingeniería Civil</h2>
 
-<table class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th>Nombre</th>
-            <th>Carrera</th>
-            <th>Semestre</th>
-            <th>Código</th>
-            <th>Horas</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var materia in Model)
+
+<h2>Materias</h2>
+
+<!-- Filtros Automáticos -->
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Filtrar Materias</strong>
+    </div>
+    <div class="card-body">
+        @using (Html.BeginForm("Materias", "Home", FormMethod.Get, new { id = "formFiltros" }))
         {
-            <tr>
-                <td>@materia.Nombre</td>
-                <td>@materia.Carrera</td>
-                <td>@materia.Semestre</td>
-                <td>@materia.Codigo</td>
-                <td>@materia.Horas</td>
-            </tr>
+            <div class="row">
+                <!-- Filtro por Nombre -->
+                <div class="col-md-4">
+                    <label for="nombre">Nombre de la Materia</label>
+                    @Html.DropDownList("nombre", ViewBag.NombresMaterias as SelectList, "-- Selecciona --", new { @class = "form-control" })
+                </div>
+
+                <!-- Filtro por Semestre -->
+                <div class="col-md-4">
+                    <label for="semestre">Semestre</label>
+                    @Html.DropDownList("semestre", ViewBag.Semestres as SelectList, "-- Selecciona --", new { @class = "form-control" })
+                </div>
+
+                <!-- Filtro por Carrera -->
+                <div class="col-md-4">
+                    <label for="carrera">Carrera</label>
+                    @Html.DropDownList("carrera", ViewBag.Carreras as SelectList, "-- Selecciona --", new { @class = "form-control" })
+                </div>
+            </div>
         }
-    </tbody>
-</table>
+    </div>
+</div>
+
+<hr />
+
+
+
+
+
+<!-- Tabla de Resultados -->
+<div id="tablaMaterias">
+    @Html.Partial("_TablaMaterias", Model)
+</div>
+
+<button type="button" class="btn btn-success" data-toggle="collapse" data-target="#formularioAgregar">
+    <i class="fa fa-plus"></i> Agregar Materia
+</button>
+<div id="formularioAgregar" class="collapse mt-3">
+    @using (Html.BeginForm("AgregarMateria", "Home", FormMethod.Post))
+    {
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                @Html.Label("Nombre")
+                @Html.TextBox("Nombre", null, new { @class = "form-control", placeholder = "Ej: Cálculo I" })
+            </div>
+            <div class="form-group col-md-4">
+                @Html.Label("Carrera")
+                @Html.DropDownList("Carrera", ViewBag.Carreras as SelectList, "-- Selecciona --", new { @class = "form-control" })
+            </div>
+            <div class="form-group col-md-4">
+                @Html.Label("Semestre")
+                @Html.DropDownList("Semestre", ViewBag.Semestres as SelectList, "-- Selecciona --", new { @class = "form-control" })
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                @Html.Label("Código")
+                @Html.TextBox("Codigo", null, new { @class = "form-control", placeholder = "Ej: MAT101" })
+            </div>
+            <div class="form-group col-md-4">
+                @Html.Label("Horas")
+                @Html.TextBox("Horas", null, new { @class = "form-control", placeholder = "Ej: 5 horas semanales" })
+            </div>
+            <div class="form-group col-md-4 align-self-end">
+                <button type="submit" class="btn btn-primary btn-block">Guardar Materia</button>
+            </div>
+        </div>
+    }
+</div>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            // Manejo de filtros AJAX
+            $('#nombre, #semestre, #carrera').change(function () {
+                $('#formFiltros').submit();
+            });
+
+            $('#formFiltros').on('submit', function (e) {
+                e.preventDefault();
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'GET',
+                    data: $(this).serialize(),
+                    success: function (result) {
+                        $('#tablaMaterias').html(result);
+                    }
+                });
+            });
+
+            // Botón EDITAR
+            $(document).on('click', '.btn-edit', function () {
+                var row = $(this).closest('tr');
+
+                row.find('.view-mode').hide();
+                row.find('.edit-mode').show();
+
+                $(this).hide();
+                row.find('.btn-save').show();
+            });
+
+            // Botón GUARDAR
+            $(document).on('click', '.btn-save', function () {
+                var row = $(this).closest('tr');
+                var id = row.data('id');
+
+                var Nombre = row.find('[name=Nombre]').val();
+                var Carrera = row.find('[name=Carrera]').val();
+                var Semestre = row.find('[name=Semestre]').val();
+                var Codigo = row.find('[name=Codigo]').val();
+                var Horas = row.find('[name=Horas]').val();
+
+                $.post('@Url.Action("EditarMateria", "Home")', {
+                    id: id,
+                    Nombre: Nombre,
+                    Carrera: Carrera,
+                    Semestre: Semestre,
+                    Codigo: Codigo,
+                    Horas: Horas
+                }, function (response) {
+                    location.reload(); // Recargar página para ver cambios
+                });
+            });
+
+            // Botón ELIMINAR
+            $(document).on('click', '.btn-delete', function () {
+                if (!confirm("¿Estás seguro de eliminar esta materia?")) return;
+
+                var row = $(this).closest('tr');
+                var id = row.data('id');
+
+                $.post('@Url.Action("EliminarMateria", "Home")', {
+                    id: id
+                }, function (response) {
+                    row.remove(); // Eliminar fila visualmente
+                    alert("Materia eliminada.");
+                });
+            });
+        });
+    </script>
+}

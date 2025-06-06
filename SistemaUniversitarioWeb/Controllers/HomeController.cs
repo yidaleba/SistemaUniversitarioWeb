@@ -8,18 +8,24 @@ using Microsoft.AspNetCore.Hosting.Server;
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using System.Configuration;
 
 namespace SistemaUniversitarioWeb.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly IConfiguration _configuration;
         private readonly ILogger<HomeController> _logger;
         string connectionString = "Data Source=|DataDirectory|universidad.db";
 
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, IConfiguration configuration)
         {
             _logger = logger;
+            _configuration = configuration;
         }
 
         public IActionResult Index()
@@ -47,40 +53,118 @@ namespace SistemaUniversitarioWeb.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
-        public ActionResult Materias()
+
+
+        public ActionResult Materias(string nombre, int? semestre, string carrera)
         {
-            var materias = new List<Materia>();
-            string connectionString = "Data Source=|DataDirectory|universidad.db;Version=3;";
-
-
-
-            using (var connection = new SQLiteConnection(connectionString))
+            using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
             {
                 connection.Open();
-                string query = "SELECT * FROM Materias WHERE Carrera = 'Ingenieria civil'";
 
-                using (var command = new SQLiteCommand(query, connection))
-                using (var reader = command.ExecuteReader())
+                // Cargar datos filtrados
+                var query = new StringBuilder("SELECT * FROM Materias WHERE 1=1");
+
+                if (!string.IsNullOrEmpty(nombre))
                 {
-                    while (reader.Read())
-                    {
-                        materias.Add(new Materia
-                        {
-                            Id = Convert.ToInt32(reader["Id"]),
-                            Nombre = reader["Nombre"].ToString(),
-                            Carrera = reader["Carrera"].ToString(),
-                            Semestre = Convert.ToInt32(reader["Semestre"]),
-                            Codigo = reader["Codigo"].ToString(),
-                            Horas = reader["Horas"].ToString()
-                        });
-                    }
+                    query.Append(" AND Nombre = @Nombre");
+                }
+
+                if (semestre.HasValue)
+                {
+                    query.Append(" AND Semestre = @Semestre");
+                }
+
+                if (!string.IsNullOrEmpty(carrera))
+                {
+                    query.Append(" AND Carrera = @Carrera");
+                }
+
+                var parameters = new { Nombre = nombre, Semestre = semestre, Carrera = carrera };
+                var materias = connection.Query<Materia>(query.ToString(), parameters);
+
+                // Cargar opciones para los dropdowns
+                ViewBag.NombresMaterias = new SelectList(connection.Query<string>("SELECT DISTINCT Nombre FROM Materias").ToList());
+                ViewBag.Semestres = new SelectList(Enumerable.Range(1, 10));
+                ViewBag.Carreras = new SelectList(connection.Query<string>("SELECT DISTINCT Carrera FROM Materias").ToList());
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return PartialView("_TablaMaterias", materias);
+                }
+                else
+                {
+                    return View(materias);
                 }
             }
-
-            return View(materias);
         }
 
+        [HttpPost]
+        public IActionResult AgregarMateria(string Nombre, string Carrera, int? Semestre, string Codigo, string Horas)
+        {
+            if (string.IsNullOrEmpty(Nombre) || string.IsNullOrEmpty(Carrera) || !Semestre.HasValue || Semestre < 1 || Semestre > 10 || string.IsNullOrEmpty(Codigo) || string.IsNullOrEmpty(Horas))
+            {
+                // Puedes mostrar un mensaje de error si quieres
+                TempData["Error"] = "Por favor completa todos los campos correctamente.";
+                return RedirectToAction("Materias");
+            }
 
+            using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                connection.Open();
+
+                string query = @"
+            INSERT INTO Materias (Nombre, Carrera, Semestre, Codigo, Horas)
+            VALUES (@Nombre, @Carrera, @Semestre, @Codigo, @Horas)";
+
+                connection.Execute(query, new { Nombre, Carrera, Semestre, Codigo, Horas });
+            }
+
+            return RedirectToAction("Materias");
+        }
+
+        [HttpPost]
+        public IActionResult EditarMateria(int id, string Nombre, string Carrera, int? Semestre, string Codigo, string Horas)
+        {
+            if (string.IsNullOrEmpty(Nombre) || string.IsNullOrEmpty(Carrera) || !Semestre.HasValue || Semestre < 1 || Semestre > 10 || string.IsNullOrEmpty(Codigo) || string.IsNullOrEmpty(Horas))
+            {
+                TempData["Error"] = "Por favor completa todos los campos correctamente.";
+                return RedirectToAction("Materias");
+            }
+
+            using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                connection.Open();
+
+                string query = @"
+            UPDATE Materias
+            SET Nombre = @Nombre,
+                Carrera = @Carrera,
+                Semestre = @Semestre,
+                Codigo = @Codigo,
+                Horas = @Horas
+            WHERE Id = @Id";
+
+                connection.Execute(query, new { Id = id, Nombre, Carrera, Semestre, Codigo, Horas });
+            }
+
+            TempData["Exito"] = "Materia actualizada exitosamente.";
+            return RedirectToAction("Materias");
+        }
+
+        [HttpPost]
+        public IActionResult EliminarMateria(int id)
+        {
+            using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                connection.Open();
+
+                string query = "DELETE FROM Materias WHERE Id = @Id";
+                connection.Execute(query, new { Id = id });
+            }
+
+            TempData["Exito"] = "Materia eliminada exitosamente.";
+            return RedirectToAction("Materias");
+        }
 
 
     }
