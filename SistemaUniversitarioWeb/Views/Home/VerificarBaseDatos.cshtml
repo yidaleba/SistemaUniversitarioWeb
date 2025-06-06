@@ -1,0 +1,15 @@
+﻿@model List<string>
+@{
+    ViewBag.Title = "Verificar Base de Datos";
+}
+
+<h2>Ruta del archivo .db que está leyendo:</h2>
+<p><strong>@ViewBag.DatabasePath</strong></p>
+
+<h2>Tablas en la base de datos</h2>
+<ul>
+    @foreach (var tabla in Model)
+    {
+        <li>@tabla</li>
+    }
+</ul>

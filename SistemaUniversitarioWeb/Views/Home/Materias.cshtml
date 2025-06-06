@@ -1,0 +1,30 @@
+﻿@model List<SistemaUniversitarioWeb.Models.Materia>
+@{
+    ViewBag.Title = "Materias - Ingeniería Civil";
+}
+
+<h2>Materias - Ingeniería Civil</h2>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Carrera</th>
+            <th>Semestre</th>
+            <th>Código</th>
+            <th>Horas</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var materia in Model)
+        {
+            <tr>
+                <td>@materia.Nombre</td>
+                <td>@materia.Carrera</td>
+                <td>@materia.Semestre</td>
+                <td>@materia.Codigo</td>
+                <td>@materia.Horas</td>
+            </tr>
+        }
+    </tbody>
+</table>
