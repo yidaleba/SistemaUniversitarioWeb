@@ -247,7 +247,7 @@ namespace SistemaUniversitarioWeb.Controllers
 
 
         [HttpPost]
-        public IActionResult EditarHorario(int Id, int Semestre, int Grupo, int CantEstudiantes, string Dia, string HoraInicio, string HoraFin)
+        public IActionResult EditarHorario(int Id, int Grupo, int CantEstudiantes, string Dia, string HoraInicio, string HoraFin)
         {
             try
             {
@@ -255,39 +255,27 @@ namespace SistemaUniversitarioWeb.Controllers
                 {
                     connection.Open();
 
-                    // Mensaje para ver qué datos estamos recibiendo
-                    System.Diagnostics.Debug.WriteLine($"Editando Horario ID={Id}, Datos: {Dia}, {HoraInicio}, {HoraFin}");
-
                     var query = @"
                 UPDATE Horarios
                 SET 
-                    Dia = @Dia,
-                    Semestre = @Semestre,
                     Grupo = @Grupo,
                     CantEstudiantes = @CantEstudiantes,
+                    Dia = @Dia,
                     HoraInicio = @HoraInicio,
                     HoraFin = @HoraFin
                 WHERE Id = @Id";
 
-                    var rowsAffected = connection.Execute(query, new { Id, Semestre, Grupo, CantEstudiantes, Dia, HoraInicio, HoraFin });
+                    var rowsAffected = connection.Execute(query, new { Id, Grupo, CantEstudiantes, Dia, HoraInicio, HoraFin });
 
                     if (rowsAffected == 0)
-                    {
-                        System.Diagnostics.Debug.WriteLine("?? No se encontró ningún horario con ese Id");
-                        TempData["Error"] = "No se encontró el horario.";
-                    }
-                    else
-                    {
-                        TempData["Exito"] = "Horario actualizado exitosamente.";
-                    }
-
-                    return Json(new { success = rowsAffected > 0 });
+                        throw new Exception("No se encontró el registro con ese ID");
                 }
+
+                return Json(new { success = true, message = "Horario actualizado exitosamente." });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("? Error: " + ex.Message);
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Error al guardar: " + ex.Message });
             }
         }
 

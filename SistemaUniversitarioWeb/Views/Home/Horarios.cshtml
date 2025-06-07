@@ -94,6 +94,7 @@
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         function cargarHorarios() {
@@ -138,36 +139,46 @@
                 var row = $(this).closest('tr');
                 var id = row.data('id');
 
-                var semestre = row.find('[name=Semestre]').val() || row.find('[name=Semestre]').siblings('.view-mode').text();
-                var grupo = row.find('[name=Grupo]').val() || row.find('[name=Grupo]').siblings('.view-mode').text();
-                var cantEstudiantes = row.find('[name=CantEstudiantes]').val() || row.find('[name=CantEstudiantes]').siblings('.view-mode').text();
-                var dia = row.find('[name=Dia]').val() || row.find('[name=Dia]').siblings('.view-mode').text();
-                var horaInicio = row.find('[name=HoraInicio]').val() || row.find('[name=HoraInicio]').siblings('.view-mode').text();
-                var horaFin = row.find('[name=HoraFin]').val() || row.find('[name=HoraFin]').siblings('.view-mode').text();
+                // Si el campo está editando, toma el valor del dropdown; si no, usa el valor visible
+                var semestre = row.find('[name=Semestre]').val() || row.find('[name=Semestre]').siblings('.view-mode').text().trim();
+                var grupo = row.find('[name=Grupo]').val() || row.find('[name=Grupo]').siblings('.view-mode').text().trim();
+                var cantEstudiantes = row.find('[name=CantEstudiantes]').val() || row.find('[name=CantEstudiantes]').siblings('.view-mode').text().trim();
+                var dia = row.find('[name=Dia]').val() || row.find('[name=Dia]').siblings('.view-mode').text().trim();
+                var horaInicio = row.find('[name=HoraInicio]').val() || row.find('[name=HoraInicio]').siblings('.view-mode').text().trim();
+                var horaFin = row.find('[name=HoraFin]').val() || row.find('[name=HoraFin]').siblings('.view-mode').text().trim();
 
                 if (!semestre || !grupo || !cantEstudiantes || !dia || !horaInicio || !horaFin) {
-                    alert("Por favor selecciona todos los valores.");
+                    alert("Por favor selecciona todos los campos.");
                     return;
                 }
 
+                // Mostrar valores para depurar
+                console.log({
+                    Id: id,
+                    Semestre: semestre,
+                    Grupo: grupo,
+                    CantEstudiantes: cantEstudiantes,
+                    Dia: dia,
+                    HoraInicio: horaInicio,
+                    HoraFin: horaFin
+                });
+
                 $.post('@Url.Action("EditarHorario", "Home")', {
                     Id: id,
-                    Semestre: parseInt(semestre),
                     Grupo: parseInt(grupo),
                     CantEstudiantes: parseInt(cantEstudiantes),
                     Dia: dia,
                     HoraInicio: horaInicio,
                     HoraFin: horaFin
                 }, function (response) {
-                    alert("Horario actualizado exitosamente.");
-                    location.reload(); // Recargar página para ver cambios
-                }).fail(function (xhr) {
-                    try {
-                        var response = JSON.parse(xhr.responseText);
-                        alert("Error: " + response.message);
-                    } catch (e) {
-                        alert("Hubo un error al guardar los cambios.");
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload(); // Recargar página
+                    } else {
+                        alert(response.message); // Mostrar mensaje de error
                     }
+                }).fail(function (xhr) {
+                    alert("Hubo un fallo al enviar la solicitud.");
                 });
             });
 
@@ -179,8 +190,10 @@
                 if (!confirm("¿Estás seguro de eliminar este horario?")) return;
 
                 $.post('@Url.Action("EliminarHorario", "Home")', { id: id }, function (response) {
+                    alert("Horario eliminado exitosamente.");
                     row.remove(); // Eliminar fila visualmente
-                    alert("Horario eliminado.");
+                }).fail(function () {
+                    alert("Hubo un error al eliminar el horario.");
                 });
             });
         });
