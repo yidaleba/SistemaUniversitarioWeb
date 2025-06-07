@@ -1,0 +1,152 @@
+﻿@model IEnumerable<SistemaUniversitarioWeb.Models.HorarioVM>
+@{
+    ViewBag.Title = "Horarios";
+}
+
+<h2>Horarios</h2>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Filtrar Horarios</strong>
+    </div>
+    <div class="card-body">
+        @using (Html.BeginForm("Horarios", "Home", FormMethod.Get, new { id = "formFiltros" }))
+        {
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="carrera">Carrera</label>
+                    @Html.DropDownList("carrera", ViewBag.Carreras as SelectList, "-- Todos --", new { @class = "form-control" })
+                </div>
+                <div class="col-md-4">
+                    <label for="semestre">Semestre</label>
+                    @Html.DropDownList("semestre", ViewBag.Semestres as SelectList, "-- Todos --", new { @class = "form-control" })
+                </div>
+                <div class="col-md-4">
+                    <label for="materia">Materia</label>
+                    @Html.DropDownList("materia", ViewBag.Materias as SelectList, "-- Todos --", new { @class = "form-control" })
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Tabla de resultados -->
+<div id="tablaHorarios">
+    @Html.Partial("_TablaHorarios", Model)
+</div>
+
+<!-- Formulario oculto para edición -->
+<div id="formularioEditar" class="collapse mt-3 card p-3">
+    @Html.Hidden("Id") <!-- 👈 Añade esto junto con @Html.Hidden("Codigo") -->
+    <h4>Editar Horario</h4>
+
+    @using (Html.BeginForm("EditarHorario", "Home", FormMethod.Post))
+    {
+
+        @Html.Hidden("Codigo")
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                @Html.Label("Materia")
+                <input type="text" id="editMateria" class="form-control" disabled />
+            </div>
+            <div class="form-group col-md-4">
+                @Html.Label("Carrera")
+                <input type="text" id="editCarrera" class="form-control" disabled />
+            </div>
+            <div class="form-group col-md-4">
+                @Html.Label("Semestre")
+                <input type="number" name="Semestre" id="editSemestre" class="form-control" />
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                @Html.Label("Grupo")
+                <input type="number" name="Grupo" id="editGrupo" class="form-control" />
+            </div>
+            <div class="form-group col-md-4">
+                @Html.Label("N° Estudiantes")
+                <input type="number" name="CantEstudiantes" id="editCantEstudiantes" class="form-control" />
+            </div>
+            <div class="form-group col-md-4">
+                @Html.Label("Docente")
+                <input type="text" id="editDocente" class="form-control" disabled />
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                @Html.Label("Día")
+                <input type="text" name="Dia" id="editDia" class="form-control" />
+            </div>
+            <div class="form-group col-md-4">
+                @Html.Label("Hora Inicio")
+                <input type="text" name="HoraInicio" id="editHoraInicio" class="form-control" />
+            </div>
+            <div class="form-group col-md-4">
+                @Html.Label("Hora Fin")
+                <input type="text" name="HoraFin" id="editHoraFin" class="form-control" />
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+        <button type="button" class="btn btn-secondary" data-toggle="collapse" data-target="#formularioEditar">Cancelar</button>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function cargarHorarios() {
+            $.ajax({
+                url: $('#formFiltros').attr('action'),
+                type: 'GET',
+                data: $('#formFiltros').serialize(),
+                success: function (result) {
+                    $('#tablaHorarios').html(result);
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            $('#carrera, #semestre, #materia').change(function () {
+                $('#formFiltros').submit();
+            });
+
+            $('#formFiltros').on('submit', function (e) {
+                e.preventDefault();
+                cargarHorarios();
+            });
+
+            // Cargar automáticamente al iniciar
+            cargarHorarios();
+
+        });
+        $(document).on('click', '.btn-edit', function () {
+            var row = $(this).closest('tr');
+            var id = row.data('id'); // Obtenemos el Id del data-id
+            var codigo = row.find('td:eq(1)').text();
+            var materia = row.find('td:eq(0)').text();
+            var carrera = row.find('td:eq(2)').text();
+            var semestre = row.find('td:eq(3)').text();
+            var grupo = row.find('td:eq(4)').text();
+            var cantEstudiantes = row.find('td:eq(5)').text();
+            var docente = row.find('td:eq(6)').text();
+            var dia = row.find('td:eq(7)').text();
+            var horaInicio = row.find('td:eq(8)').text();
+            var horaFin = row.find('td:eq(9)').text();
+
+            $('#editMateria').val(materia);
+            $('#editCarrera').val(carrera);
+            $('#editSemestre').val(semestre);
+            $('#editGrupo').val(grupo);
+            $('#editCantEstudiantes').val(cantEstudiantes);
+            $('#editDocente').val(docente);
+            $('#editDia').val(dia);
+            $('#editHoraInicio').val(horaInicio);
+            $('#editHoraFin').val(horaFin);
+            $('#Codigo').val(codigo); // Aún lo usas para búsqueda si es necesario
+            $('#Id').val(id); // 👈 Nuevo campo oculto para enviar el Id
+
+            $('#formularioEditar').collapse('show');
+        });
+    </script>
+}

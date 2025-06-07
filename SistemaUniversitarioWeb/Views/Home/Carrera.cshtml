@@ -1,0 +1,25 @@
+﻿@page
+@model SistemaUniversitarioWeb.Views.Home.CarreraModel
+@{
+    ViewBag.Title = "Carrera";
+    string nombreCarrera = ViewBag.NombreCarrera ?? "esta carrera";
+}
+<h2>Bienvenido a @nombreCarrera</h2>
+<br />
+
+<div class="row justify-content-center">
+    <div class="col-md-3">
+        <a href="@Url.Action("Materias", "Home", new { carrera = nombreCarrera })" class="btn btn-primary btn-block">Materias</a>
+    </div>
+    <div class="col-md-3">
+        <a href="@Url.Action("Horarios", "Home", new { carrera = nombreCarrera })" class="btn btn-primary btn-block">Horarios</a>
+    </div>
+    <div class="col-md-3">
+        <a href="#" class="btn btn-info btn-block disabled">Aulas</a>
+    </div>
+</div>
+
+<br />
+<div class="text-center">
+    <a href="@Url.Action("Pregrados", "Home")" class="btn btn-secondary">Volver a Pregrados</a>
+</div>

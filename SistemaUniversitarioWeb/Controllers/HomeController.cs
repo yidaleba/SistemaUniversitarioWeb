@@ -43,10 +43,25 @@ namespace SistemaUniversitarioWeb.Controllers
             return View();
         }
 
-        public ActionResult IngenieriaCivil()
+        public IActionResult IngenieriaCivil()
         {
-            return View();
+            ViewBag.NombreCarrera = "Ingeniería Civil";
+            return View("Carrera");
         }
+
+        public IActionResult Mecatronica()
+        {
+            ViewBag.NombreCarrera = "Mecatrónica";
+            return View("Carrera");
+        }
+
+        public IActionResult Derecho()
+        {
+            ViewBag.NombreCarrera = "Derecho";
+            return View("Carrera");
+        }
+
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
@@ -57,6 +72,8 @@ namespace SistemaUniversitarioWeb.Controllers
 
         public ActionResult Materias(string nombre, int? semestre, string carrera)
         {
+
+            ViewBag.NombreCarrera = carrera ?? "Todas";
             using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
             {
                 connection.Open();
@@ -166,6 +183,108 @@ namespace SistemaUniversitarioWeb.Controllers
             return RedirectToAction("Materias");
         }
 
+        public IActionResult Horarios(string carrera = null, int? semestre = null, string materia = null)
+        {
+            using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                connection.Open();
+
+                // Cargar datos filtrados
+                var query = new StringBuilder(@"
+            SELECT 
+                m.Nombre AS Materia,
+                m.Codigo,
+                m.Carrera,
+                m.Semestre,
+                h.Grupo,
+                h.CantEstudiantes,
+                d.Nombre || ' ' || d.Apellido AS Docente,
+                h.Dia,
+                h.HoraInicio,
+                h.HoraFin
+            FROM Horarios h
+            INNER JOIN Materias m ON h.MateriaId = m.Id
+            INNER JOIN DocenteMateria dm ON m.Id = dm.MateriaId
+            INNER JOIN Docente d ON dm.DocenteId = d.Id
+            WHERE 1=1");
+
+                if (!string.IsNullOrEmpty(carrera))
+                {
+                    query.Append(" AND m.Carrera = @Carrera");
+                }
+
+                if (semestre.HasValue)
+                {
+                    query.Append(" AND m.Semestre = @Semestre");
+                }
+
+                if (!string.IsNullOrEmpty(materia))
+                {
+                    query.Append(" AND m.Nombre = @Materia");
+                }
+
+                var parameters = new { Carrera = carrera, Semestre = semestre, Materia = materia };
+                var horarios = connection.Query<HorarioVM>(query.ToString(), parameters);
+
+                // Cargar opciones para los dropdowns
+                ViewBag.Carreras = new SelectList(connection.Query<string>("SELECT DISTINCT Carrera FROM Materias").ToList());
+                ViewBag.Semestres = new SelectList(Enumerable.Range(1, 10));
+                ViewBag.Materias = new SelectList(connection.Query<string>("SELECT DISTINCT Nombre FROM Materias").ToList());
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return PartialView("_TablaHorarios", horarios);
+                }
+                else
+                {
+                    return View(horarios);
+                }
+
+
+            }
+        }
+        [HttpPost]
+        public IActionResult EditarHorario(int Id, int Semestre, int Grupo, int CantEstudiantes, string Dia, string HoraInicio, string HoraFin)
+        {
+            using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                connection.Open();
+
+                var query = @"
+            UPDATE Horarios
+            SET 
+                Semestre = @Semestre,
+                Grupo = @Grupo,
+                CantEstudiantes = @CantEstudiantes,
+                Dia = @Dia,
+                HoraInicio = @HoraInicio,
+                HoraFin = @HoraFin
+            WHERE Id = @Id";
+
+                connection.Execute(query, new { Id, Semestre, Grupo, CantEstudiantes, Dia, HoraInicio, HoraFin });
+            }
+
+            TempData["Exito"] = "Horario actualizado exitosamente.";
+            return RedirectToAction("Horarios");
+        }
+
+        [HttpPost]
+        public IActionResult EliminarHorario(string codigo)
+        {
+            using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                connection.Open();
+
+                var query = @"
+            DELETE FROM Horarios
+            WHERE MateriaId IN (SELECT Id FROM Materias WHERE Codigo = @Codigo)";
+
+                connection.Execute(query, new { Codigo = codigo });
+            }
+
+            TempData["Exito"] = "Horario eliminado exitosamente.";
+            return RedirectToAction("Horarios");
+        }
 
     }
 

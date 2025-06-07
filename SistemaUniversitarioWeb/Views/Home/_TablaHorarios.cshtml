@@ -1,0 +1,50 @@
+﻿@model IEnumerable<SistemaUniversitarioWeb.Models.HorarioVM>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Materia</th>
+            <th>Código</th>
+            <th>Carrera</th>
+            <th>Semestre</th>
+            <th>Grupo</th>
+            <th>N° Estudiantes</th>
+            <th>Docente</th>
+            <th>Día</th>
+            <th>Hora Inicio</th>
+            <th>Hora Fin</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <tr data-id="@item.Id">
+                    <!-- Ahora usamos el Id real -->
+                    <td>@item.Materia</td>
+                    <td>@item.Codigo</td>
+                    <td>@item.Carrera</td>
+                    <td>@item.Semestre</td>
+                    <td>@item.Grupo</td>
+                    <td>@item.CantEstudiantes</td>
+                    <td>@item.Docente</td>
+                    <td>@item.Dia</td>
+                    <td>@item.HoraInicio</td>
+                    <td>@item.HoraFin</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm btn-edit">Editar</button>
+                        <button class="btn btn-danger btn-sm btn-delete">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="11" class="text-center">No hay horarios registrados.</td>
+            </tr>
+        }
+    </tbody>
+</table>

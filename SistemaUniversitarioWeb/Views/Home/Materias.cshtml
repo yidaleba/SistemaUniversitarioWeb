@@ -1,6 +1,7 @@
 ﻿@model List<SistemaUniversitarioWeb.Models.Materia>
 @{
     ViewBag.Title = "Materias - Ingeniería Civil";
+
     var nombres = ViewBag.NombresDisponibles as List<string>;
     var carreras = ViewBag.CarrerasDisponibles as List<string>;
 }
@@ -14,7 +15,7 @@
 
 
 
-<h2>Materias</h2>
+<h2>Materias - @(ViewBag.NombreCarrera ?? "Todas las carreras")</h2>
 
 <!-- Filtros Automáticos -->
 <div class="card mb-4">
@@ -28,19 +29,19 @@
                 <!-- Filtro por Nombre -->
                 <div class="col-md-4">
                     <label for="nombre">Nombre de la Materia</label>
-                    @Html.DropDownList("nombre", ViewBag.NombresMaterias as SelectList, "-- Selecciona --", new { @class = "form-control" })
+                    @Html.DropDownList("nombre", ViewBag.NombresMaterias as SelectList, "-- Todos --", new { @class = "form-control" })
                 </div>
 
                 <!-- Filtro por Semestre -->
                 <div class="col-md-4">
                     <label for="semestre">Semestre</label>
-                    @Html.DropDownList("semestre", ViewBag.Semestres as SelectList, "-- Selecciona --", new { @class = "form-control" })
+                    @Html.DropDownList("semestre", ViewBag.Semestres as SelectList, "-- Todos --", new { @class = "form-control" })
                 </div>
 
                 <!-- Filtro por Carrera -->
                 <div class="col-md-4">
                     <label for="carrera">Carrera</label>
-                    @Html.DropDownList("carrera", ViewBag.Carreras as SelectList, "-- Selecciona --", new { @class = "form-control" })
+                    @Html.DropDownList("carrera", ViewBag.Carreras as SelectList, "-- Todos --", new { @class = "form-control" })
                 </div>
             </div>
         }
@@ -175,6 +176,27 @@
                     alert("Materia eliminada.");
                 });
             });
+       
+                // Si hay un valor en la URL, selecciónalo automáticamente
+                var urlParams = new URLSearchParams(window.location.search);
+
+                if (urlParams.has('nombre')) {
+                    $('#nombre').val(urlParams.get('nombre'));
+                }
+
+                if (urlParams.has('semestre')) {
+                    $('#semestre').val(urlParams.get('semestre'));
+                }
+
+                if (urlParams.has('carrera')) {
+                    $('#carrera').val(urlParams.get('carrera'));
+                }
+
+                // Enviar formulario automáticamente si hay parámetros
+                if (urlParams.toString()) {
+                    $('#formFiltros').submit();
+                }
+            
         });
     </script>
 }

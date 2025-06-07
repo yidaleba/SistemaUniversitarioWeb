@@ -1,0 +1,15 @@
+﻿@page
+@model SistemaUniversitarioWeb.Views.Home.DerechoModel
+@{
+    ViewBag.Title = "Materias - Derecho";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div style="display: flex; flex-direction: column; gap: 10px; width: 200px;">
+    <a class="btn btn-warning" href="@Url.Action("Materias", "Home")">Materias</a>
+    <a href="@Url.Action("Horarios", "Home")" class="btn btn-success">Ver Horarios</a>
+
+</div>
+
+@Html.Partial("Materias")
+
