@@ -22,19 +22,105 @@
             foreach (var item in Model)
             {
                 <tr data-id="@item.Id">
-                    <!-- Ahora usamos el Id real -->
-                    <td>@item.Materia</td>
-                    <td>@item.Codigo</td>
-                    <td>@item.Carrera</td>
-                    <td>@item.Semestre</td>
-                    <td>@item.Grupo</td>
-                    <td>@item.CantEstudiantes</td>
-                    <td>@item.Docente</td>
-                    <td>@item.Dia</td>
-                    <td>@item.HoraInicio</td>
-                    <td>@item.HoraFin</td>
+                    <!-- Materia -->
+                    <td>
+                        <span class="view-mode">@item.Materia</span>
+                        @Html.DropDownList("Materia", ViewBag.Materias as SelectList, item.Materia, new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Código -->
+                    <td>
+                        <span class="view-mode">@item.Codigo</span>
+                        @Html.DropDownList("Codigo", ViewBag.Codigos as SelectList, item.Codigo, new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Carrera -->
+                    <td>
+                        <span class="view-mode">@item.Carrera</span>
+                        @Html.DropDownList("Carrera", ViewBag.Carreras as SelectList, item.Carrera, new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Semestre -->
+                    <td>
+                        <span class="view-mode">@item.Semestre</span>
+                        @Html.DropDownList("Semestre", Enumerable.Range(1, 10).Select(x => new SelectListItem { Text = x.ToString(), Value = x.ToString() }), item.Semestre.ToString(), new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Grupo -->
+                    <td>
+                        <span class="view-mode">@item.Grupo</span>
+                        @Html.DropDownList("Grupo", Enumerable.Range(1, 20).Select(x => new SelectListItem { Text = x.ToString(), Value = x.ToString() }), item.Grupo.ToString(), new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- CantEstudiantes -->
+                    <td>
+                        <span class="view-mode">@item.CantEstudiantes</span>
+                        @Html.DropDownList("CantEstudiantes", Enumerable.Range(10, 50).Select(x => new SelectListItem { Text = x.ToString(), Value = x.ToString() }), item.CantEstudiantes.ToString(), new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Docente -->
+                    <td>
+                        <span class="view-mode">@item.Docente</span>
+                        @Html.DropDownList("Docente", ViewBag.Docentes as SelectList, item.Docente, new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Día -->
+                    <td>
+                        <span class="view-mode">@item.Dia</span>
+                        @Html.DropDownList("Dia", new List<SelectListItem>
+                {
+                new SelectListItem { Text = "Lunes", Value = "Lunes" },
+                new SelectListItem { Text = "Martes", Value = "Martes" },
+                new SelectListItem { Text = "Miércoles", Value = "Miércoles" },
+                new SelectListItem { Text = "Jueves", Value = "Jueves" },
+                new SelectListItem { Text = "Viernes", Value = "Viernes" }
+                }, item.Dia, new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- HoraInicio -->
+                    <td>
+                        <span class="view-mode">@item.HoraInicio</span>
+                        @Html.DropDownList("HoraInicio", new List<SelectListItem>
+                {
+                new SelectListItem { Text = "07:00", Value = "07:00" },
+                new SelectListItem { Text = "08:00", Value = "08:00" },
+                new SelectListItem { Text = "09:00", Value = "09:00" },
+                new SelectListItem { Text = "10:00", Value = "10:00" },
+                new SelectListItem { Text = "11:00", Value = "11:00" },
+                new SelectListItem { Text = "12:00", Value = "12:00" },
+                new SelectListItem { Text = "13:00", Value = "13:00" },
+                new SelectListItem { Text = "14:00", Value = "14:00" },
+                new SelectListItem { Text = "15:00", Value = "15:00" },
+                new SelectListItem { Text = "16:00", Value = "16:00" },
+                new SelectListItem { Text = "17:00", Value = "17:00" },
+                new SelectListItem { Text = "18:00", Value = "18:00" }
+                }, item.HoraInicio, new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- HoraFin -->
+                    <td>
+                        <span class="view-mode">@item.HoraFin</span>
+                        @Html.DropDownList("HoraFin", new List<SelectListItem>
+                {
+                new SelectListItem { Text = "08:00", Value = "08:00" },
+                new SelectListItem { Text = "09:00", Value = "09:00" },
+                new SelectListItem { Text = "10:00", Value = "10:00" },
+                new SelectListItem { Text = "11:00", Value = "11:00" },
+                new SelectListItem { Text = "12:00", Value = "12:00" },
+                new SelectListItem { Text = "13:00", Value = "13:00" },
+                new SelectListItem { Text = "14:00", Value = "14:00" },
+                new SelectListItem { Text = "15:00", Value = "15:00" },
+                new SelectListItem { Text = "16:00", Value = "16:00" },
+                new SelectListItem { Text = "17:00", Value = "17:00" },
+                new SelectListItem { Text = "18:00", Value = "18:00" },
+                new SelectListItem { Text = "19:00", Value = "19:00" }
+                }, item.HoraFin, new { @class = "form-control edit-mode", style = "display:none;" })
+                    </td>
+
+                    <!-- Acciones -->
                     <td>
                         <button class="btn btn-warning btn-sm btn-edit">Editar</button>
+                        <button class="btn btn-success btn-sm btn-save" style="display:none;">Guardar</button>
                         <button class="btn btn-danger btn-sm btn-delete">Eliminar</button>
                     </td>
                 </tr>

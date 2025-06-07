@@ -104,6 +104,7 @@ namespace SistemaUniversitarioWeb.Controllers
                 ViewBag.Semestres = new SelectList(Enumerable.Range(1, 10));
                 ViewBag.Carreras = new SelectList(connection.Query<string>("SELECT DISTINCT Carrera FROM Materias").ToList());
 
+
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
                     return PartialView("_TablaMaterias", materias);
@@ -189,7 +190,6 @@ namespace SistemaUniversitarioWeb.Controllers
             {
                 connection.Open();
 
-                // Cargar datos filtrados
                 var query = new StringBuilder(@"
             SELECT 
                 m.Nombre AS Materia,
@@ -201,7 +201,8 @@ namespace SistemaUniversitarioWeb.Controllers
                 d.Nombre || ' ' || d.Apellido AS Docente,
                 h.Dia,
                 h.HoraInicio,
-                h.HoraFin
+                h.HoraFin,
+                h.Id
             FROM Horarios h
             INNER JOIN Materias m ON h.MateriaId = m.Id
             INNER JOIN DocenteMateria dm ON m.Id = dm.MateriaId
@@ -226,10 +227,12 @@ namespace SistemaUniversitarioWeb.Controllers
                 var parameters = new { Carrera = carrera, Semestre = semestre, Materia = materia };
                 var horarios = connection.Query<HorarioVM>(query.ToString(), parameters);
 
-                // Cargar opciones para los dropdowns
-                ViewBag.Carreras = new SelectList(connection.Query<string>("SELECT DISTINCT Carrera FROM Materias").ToList());
-                ViewBag.Semestres = new SelectList(Enumerable.Range(1, 10));
+                // Cargar listas para dropdowns
                 ViewBag.Materias = new SelectList(connection.Query<string>("SELECT DISTINCT Nombre FROM Materias").ToList());
+                ViewBag.Carreras = new SelectList(connection.Query<string>("SELECT DISTINCT Carrera FROM Materias").ToList());
+                ViewBag.Codigos = new SelectList(connection.Query<string>("SELECT DISTINCT Codigo FROM Materias").ToList());
+                ViewBag.Docentes = new SelectList(connection.Query<string>("SELECT DISTINCT Nombre || ' ' || Apellido AS NombreCompleto FROM Docente").ToList());
+                ViewBag.Semestres = new SelectList(Enumerable.Range(1, 10));
 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
@@ -239,47 +242,63 @@ namespace SistemaUniversitarioWeb.Controllers
                 {
                     return View(horarios);
                 }
-
-
             }
         }
+
+
         [HttpPost]
         public IActionResult EditarHorario(int Id, int Semestre, int Grupo, int CantEstudiantes, string Dia, string HoraInicio, string HoraFin)
         {
-            using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
+            try
             {
-                connection.Open();
+                using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
+                {
+                    connection.Open();
 
-                var query = @"
-            UPDATE Horarios
-            SET 
-                Semestre = @Semestre,
-                Grupo = @Grupo,
-                CantEstudiantes = @CantEstudiantes,
-                Dia = @Dia,
-                HoraInicio = @HoraInicio,
-                HoraFin = @HoraFin
-            WHERE Id = @Id";
+                    // Mensaje para ver qué datos estamos recibiendo
+                    System.Diagnostics.Debug.WriteLine($"Editando Horario ID={Id}, Datos: {Dia}, {HoraInicio}, {HoraFin}");
 
-                connection.Execute(query, new { Id, Semestre, Grupo, CantEstudiantes, Dia, HoraInicio, HoraFin });
+                    var query = @"
+                UPDATE Horarios
+                SET 
+                    Dia = @Dia,
+                    Semestre = @Semestre,
+                    Grupo = @Grupo,
+                    CantEstudiantes = @CantEstudiantes,
+                    HoraInicio = @HoraInicio,
+                    HoraFin = @HoraFin
+                WHERE Id = @Id";
+
+                    var rowsAffected = connection.Execute(query, new { Id, Semestre, Grupo, CantEstudiantes, Dia, HoraInicio, HoraFin });
+
+                    if (rowsAffected == 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine("?? No se encontró ningún horario con ese Id");
+                        TempData["Error"] = "No se encontró el horario.";
+                    }
+                    else
+                    {
+                        TempData["Exito"] = "Horario actualizado exitosamente.";
+                    }
+
+                    return Json(new { success = rowsAffected > 0 });
+                }
             }
-
-            TempData["Exito"] = "Horario actualizado exitosamente.";
-            return RedirectToAction("Horarios");
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("? Error: " + ex.Message);
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPost]
-        public IActionResult EliminarHorario(string codigo)
+        public IActionResult EliminarHorario(int id)
         {
             using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
             {
                 connection.Open();
-
-                var query = @"
-            DELETE FROM Horarios
-            WHERE MateriaId IN (SELECT Id FROM Materias WHERE Codigo = @Codigo)";
-
-                connection.Execute(query, new { Codigo = codigo });
+                string query = "DELETE FROM Horarios WHERE Id = @Id";
+                connection.Execute(query, new { Id = id });
             }
 
             TempData["Exito"] = "Horario eliminado exitosamente.";

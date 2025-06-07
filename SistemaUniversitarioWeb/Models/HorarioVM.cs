@@ -13,5 +13,9 @@
         public string Dia { get; set; }
         public string HoraInicio { get; set; }
         public string HoraFin { get; set; }
+
+        public List<string> MateriasDisponibles { get; set; } = new List<string>();
+        public List<string> CarrerasDisponibles { get; set; } = new List<string>();
+        public List<string> DocentesDisponibles { get; set; } = new List<string>();
     }
 }
