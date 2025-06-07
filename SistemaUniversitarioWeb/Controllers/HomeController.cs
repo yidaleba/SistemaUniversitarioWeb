@@ -199,6 +199,7 @@ namespace SistemaUniversitarioWeb.Controllers
                 h.Grupo,
                 h.CantEstudiantes,
                 d.Nombre || ' ' || d.Apellido AS Docente,
+                dm.Id AS DocenteMateriaId,
                 h.Dia,
                 h.HoraInicio,
                 h.HoraFin,
@@ -247,7 +248,7 @@ namespace SistemaUniversitarioWeb.Controllers
 
 
         [HttpPost]
-        public IActionResult EditarHorario(int Id, int Grupo, int CantEstudiantes, string Dia, string HoraInicio, string HoraFin)
+        public IActionResult EditarHorario(int Id, int Grupo, int CantEstudiantes, string Dia, string HoraInicio, string HoraFin, int DocenteId)
         {
             try
             {
@@ -255,28 +256,90 @@ namespace SistemaUniversitarioWeb.Controllers
                 {
                     connection.Open();
 
-                    var query = @"
+                    // Obtener MateriaId desde el horario
+                    var materiaId = connection.QueryFirstOrDefault<int>(
+                        "SELECT MateriaId FROM Horarios WHERE Id = @Id",
+                        new { Id });
+
+                    if (materiaId == 0)
+                        throw new Exception("No se encontró la materia asociada.");
+
+                    // 1. Actualizar Horario
+                    var queryHorario = @"
                 UPDATE Horarios
-                SET 
-                    Grupo = @Grupo,
+                SET Grupo = @Grupo,
                     CantEstudiantes = @CantEstudiantes,
                     Dia = @Dia,
                     HoraInicio = @HoraInicio,
                     HoraFin = @HoraFin
                 WHERE Id = @Id";
 
-                    var rowsAffected = connection.Execute(query, new { Id, Grupo, CantEstudiantes, Dia, HoraInicio, HoraFin });
+                    connection.Execute(queryHorario, new { Id, Grupo, CantEstudiantes, Dia, HoraInicio, HoraFin });
 
-                    if (rowsAffected == 0)
-                        throw new Exception("No se encontró el registro con ese ID");
+                    // 2. Actualizar DocenteMateria si se cambió el docente
+                    var docenteActual = connection.QueryFirstOrDefault<int>(
+                        "SELECT DocenteId FROM DocenteMateria WHERE MateriaId = @MateriaId",
+                        new { MateriaId = materiaId });
+
+                    if (DocenteId > 0 && DocenteId != docenteActual)
+                    {
+                        var queryDocenteMateria = @"
+                    UPDATE DocenteMateria
+                    SET DocenteId = @DocenteId
+                    WHERE MateriaId = @MateriaId";
+
+                        connection.Execute(queryDocenteMateria, new { MateriaId = materiaId, DocenteId });
+                    }
+
+                    return Json(new { success = true, message = "Horario y docente actualizados exitosamente." });
                 }
-
-                return Json(new { success = true, message = "Horario actualizado exitosamente." });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error al guardar: " + ex.Message });
+                return Json(new { success = false, message = ex.Message });
             }
+        }
+
+        [HttpPost]
+        public IActionResult AgregarHorario(int MateriaId, int Grupo, int CantEstudiantes, int numDias,
+    string Dia1, string HoraInicio1, string HoraFin1,
+    string Dia2, string HoraInicio2, string HoraFin2,
+    string Dia3, string HoraInicio3, string HoraFin3)
+        {
+            if (MateriaId <= 0 || Grupo <= 0 || CantEstudiantes <= 0 || numDias <= 0)
+            {
+                TempData["Error"] = "Por favor completa correctamente los campos.";
+                return RedirectToAction("Horarios");
+            }
+
+            using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                connection.Open();
+
+                // Insertar horario base
+                string query = @"
+            INSERT INTO Horarios (MateriaId, Grupo, CantEstudiantes, Dia, HoraInicio, HoraFin)
+            VALUES (@MateriaId, @Grupo, @CantEstudiantes, @Dia, @HoraInicio, @HoraFin)";
+
+                // Insertar cada día
+                if (numDias >= 1 && !string.IsNullOrEmpty(Dia1) && !string.IsNullOrEmpty(HoraInicio1) && !string.IsNullOrEmpty(HoraFin1))
+                {
+                    connection.Execute(query, new { MateriaId, Grupo, CantEstudiantes, Dia = Dia1, HoraInicio = HoraInicio1, HoraFin = HoraFin1 });
+                }
+
+                if (numDias >= 2 && !string.IsNullOrEmpty(Dia2) && !string.IsNullOrEmpty(HoraInicio2) && !string.IsNullOrEmpty(HoraFin2))
+                {
+                    connection.Execute(query, new { MateriaId, Grupo, CantEstudiantes, Dia = Dia2, HoraInicio = HoraInicio2, HoraFin = HoraFin2 });
+                }
+
+                if (numDias == 3 && !string.IsNullOrEmpty(Dia3) && !string.IsNullOrEmpty(HoraInicio3) && !string.IsNullOrEmpty(HoraFin3))
+                {
+                    connection.Execute(query, new { MateriaId, Grupo, CantEstudiantes, Dia = Dia3, HoraInicio = HoraInicio3, HoraFin = HoraFin3 });
+                }
+            }
+
+            TempData["Exito"] = "Horario agregado exitosamente.";
+            return RedirectToAction("Horarios");
         }
 
         [HttpPost]
