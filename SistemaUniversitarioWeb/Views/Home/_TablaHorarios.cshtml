@@ -25,25 +25,21 @@
                     <!-- Materia -->
                     <td>
                         <span class="view-mode">@item.Materia</span>
-                        @Html.DropDownList("Materia", ViewBag.Materias as SelectList, item.Materia, new { @class = "form-control edit-mode", style = "display:none;" })
                     </td>
 
                     <!-- Código -->
                     <td>
                         <span class="view-mode">@item.Codigo</span>
-                        @Html.DropDownList("Codigo", ViewBag.Codigos as SelectList, item.Codigo, new { @class = "form-control edit-mode", style = "display:none;" })
                     </td>
 
                     <!-- Carrera -->
                     <td>
                         <span class="view-mode">@item.Carrera</span>
-                        @Html.DropDownList("Carrera", ViewBag.Carreras as SelectList, item.Carrera, new { @class = "form-control edit-mode", style = "display:none;" })
                     </td>
 
                     <!-- Semestre -->
                     <td>
                         <span class="view-mode">@item.Semestre</span>
-                        @Html.DropDownList("Semestre", Enumerable.Range(1, 10).Select(x => new SelectListItem { Text = x.ToString(), Value = x.ToString() }), item.Semestre.ToString(), new { @class = "form-control edit-mode", style = "display:none;" })
                     </td>
 
                     <!-- Grupo -->
@@ -61,7 +57,6 @@
                     <!-- Docente -->
                     <td>
                         <span class="view-mode">@item.Docente</span>
-                        @Html.DropDownList("Docente", ViewBag.Docentes as SelectList, item.Docente, new { @class = "form-control edit-mode", style = "display:none;" })
                     </td>
 
                     <!-- Día -->
@@ -77,7 +72,7 @@
                 }, item.Dia, new { @class = "form-control edit-mode", style = "display:none;" })
                     </td>
 
-                    <!-- HoraInicio -->
+                    <!-- Hora Inicio -->
                     <td>
                         <span class="view-mode">@item.HoraInicio</span>
                         @Html.DropDownList("HoraInicio", new List<SelectListItem>
@@ -97,7 +92,7 @@
                 }, item.HoraInicio, new { @class = "form-control edit-mode", style = "display:none;" })
                     </td>
 
-                    <!-- HoraFin -->
+                    <!-- Hora Fin -->
                     <td>
                         <span class="view-mode">@item.HoraFin</span>
                         @Html.DropDownList("HoraFin", new List<SelectListItem>

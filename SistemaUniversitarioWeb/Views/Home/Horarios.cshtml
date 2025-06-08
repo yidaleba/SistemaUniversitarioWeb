@@ -97,51 +97,7 @@
         <i class="fa fa-plus"></i> Agregar Horario
     </button>
 </div>
-<div id="formularioAgregarHorario" class="collapse mt-3 card p-3">
-    <h4>Agregar Nuevo Horario</h4>
 
-    @using (Html.BeginForm("AgregarHorario", "Home", FormMethod.Post))
-    {
-        <div class="form-row">
-            <!-- Materia -->
-            <div class="form-group col-md-6">
-                @Html.Label("Materia")
-                @Html.DropDownList("MateriaId", ViewBag.Materias as SelectList, "-- Selecciona --", new { @class = "form-control" })
-            </div>
-
-            <!-- Grupo -->
-            <div class="form-group col-md-6">
-                @Html.Label("Grupo")
-                @Html.DropDownList("Grupo", Enumerable.Range(1, 20).Select(x => new SelectListItem { Text = x.ToString(), Value = x.ToString() }), new { @class = "form-control" })
-            </div>
-        </div>
-
-        <div class="form-row">
-            <!-- N° Estudiantes -->
-            <div class="form-group col-md-6">
-                @Html.Label("N° Estudiantes")
-                @Html.TextBox("CantEstudiantes", null, new { @class = "form-control", placeholder = "Ej: 30" })
-            </div>
-
-            <!-- Cantidad de días -->
-            <div class="form-group col-md-6">
-                @Html.Label("Cantidad de Días")
-                <select id="numDias" class="form-control">
-                    <option value="">-- Selecciona --</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Contenedor para días dinámicos -->
-        <div id="contenedorDias"></div>
-
-        <!-- Botón Guardar -->
-        <button type="submit" class="btn btn-primary">Guardar Horario</button>
-    }
-</div>
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -174,7 +130,7 @@
             // Cargar automáticamente al inicio
             cargarHorarios();
 
-            // Botón EDITAR (fila)
+            // Botón EDITAR
             $(document).on('click', '.btn-edit', function () {
                 var row = $(this).closest('tr');
 
@@ -185,12 +141,10 @@
                 row.find('.btn-save').show();
             });
 
-            // Botón GUARDAR (fila)
+            // Botón GUARDAR
             $(document).on('click', '.btn-save', function () {
                 var row = $(this).closest('tr');
                 var id = row.data('id');
-                var docenteMateriaId = row.data('docente-materia-id'); // Para actualizar DocenteMateria
-                var docenteSeleccionado = row.find('[name=Docente]').val(); // Valor del dropdown
 
                 var grupo = row.find('[name=Grupo]').val() || row.find('[name=Grupo]').siblings('.view-mode').text().trim();
                 var cantEstudiantes = row.find('[name=CantEstudiantes]').val() || row.find('[name=CantEstudiantes]').siblings('.view-mode').text().trim();
@@ -198,18 +152,22 @@
                 var horaInicio = row.find('[name=HoraInicio]').val() || row.find('[name=HoraInicio]').siblings('.view-mode').text().trim();
                 var horaFin = row.find('[name=HoraFin]').val() || row.find('[name=HoraFin]').siblings('.view-mode').text().trim();
 
+                if (!grupo || !cantEstudiantes || !dia || !horaInicio || !horaFin) {
+                    alert("Por favor selecciona todos los valores antes de guardar.");
+                    return;
+                }
+
                 $.post('@Url.Action("EditarHorario", "Home")', {
                     Id: id,
                     Grupo: parseInt(grupo),
                     CantEstudiantes: parseInt(cantEstudiantes),
                     Dia: dia,
                     HoraInicio: horaInicio,
-                    HoraFin: horaFin,
-                    DocenteId: parseInt(docenteSeleccionado)
+                    HoraFin: horaFin
                 }, function (response) {
                     if (response.success) {
-                        alert(response.message);
-                        location.reload();
+                        alert(response.message || "Horario actualizado exitosamente.");
+                        location.reload(); // Recargar página
                     } else {
                         alert(response.message);
                     }
@@ -226,84 +184,17 @@
             // Botón ELIMINAR
             $(document).on('click', '.btn-delete', function () {
                 var row = $(this).closest('tr');
-                var id = row.data('id'); // Usamos el Id real
+                var id = row.data('id');
 
                 if (!confirm("¿Estás seguro de eliminar este horario?")) return;
 
                 $.post('@Url.Action("EliminarHorario", "Home")', { id: id }, function (response) {
                     alert("Horario eliminado exitosamente.");
-                    row.remove(); // Eliminar fila visualmente
+                    row.remove();
                 }).fail(function () {
                     alert("Hubo un error al eliminar el horario.");
                 });
             });
-
-            // Generar campos de día, hora inicio y fin dinámicamente
-            $('#numDias').change(function () {
-                var numDias = parseInt($(this).val());
-                var contenedor = $('#contenedorDias');
-                contenedor.empty();
-
-                if (!numDias || numDias <= 0) return;
-
-                for (var i = 0; i < numDias; i++) {
-                    var index = i + 1;
-                    var diaSelect = `
-                    <div class="form-row mb-2">
-                        <div class="col-md-4">
-                            <label>Día ${index}</label>
-                            <select name="Dia${index}" class="form-control dias-select">
-                                <option value="">-- Selecciona --</option>
-                                <option value="Lunes">Lunes</option>
-                                <option value="Martes">Martes</option>
-                                <option value="Miércoles">Miércoles</option>
-                                <option value="Jueves">Jueves</option>
-                                <option value="Viernes">Viernes</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label>Hora Inicio</label>
-                            <select name="HoraInicio${index}" class="form-control">
-                                <option value="">-- Selecciona --</option>
-                                <option value="07:00">07:00</option>
-                                <option value="08:00">08:00</option>
-                                <option value="09:00">09:00</option>
-                                <option value="10:00">10:00</option>
-                                <option value="11:00">11:00</option>
-                                <option value="12:00">12:00</option>
-                                <option value="13:00">13:00</option>
-                                <option value="14:00">14:00</option>
-                                <option value="15:00">15:00</option>
-                                <option value="16:00">16:00</option>
-                                <option value="17:00">17:00</option>
-                                <option value="18:00">18:00</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label>Hora Fin</label>
-                            <select name="HoraFin${index}" class="form-control">
-                                <option value="">-- Selecciona --</option>
-                                <option value="08:00">08:00</option>
-                                <option value="09:00">09:00</option>
-                                <option value="10:00">10:00</option>
-                                <option value="11:00">11:00</option>
-                                <option value="12:00">12:00</option>
-                                <option value="13:00">13:00</option>
-                                <option value="14:00">14:00</option>
-                                <option value="15:00">15:00</option>
-                                <option value="16:00">16:00</option>
-                                <option value="17:00">17:00</option>
-                                <option value="18:00">18:00</option>
-                                <option value="19:00">19:00</option>
-                            </select>
-                        </div>
-                    </div>`;
-
-                    contenedor.append(diaSelect);
-                }
-            });
         });
     </script>
-
-
 }

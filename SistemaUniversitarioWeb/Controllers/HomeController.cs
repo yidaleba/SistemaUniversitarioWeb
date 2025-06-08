@@ -116,29 +116,7 @@ namespace SistemaUniversitarioWeb.Controllers
             }
         }
 
-        [HttpPost]
-        public IActionResult AgregarMateria(string Nombre, string Carrera, int? Semestre, string Codigo, string Horas)
-        {
-            if (string.IsNullOrEmpty(Nombre) || string.IsNullOrEmpty(Carrera) || !Semestre.HasValue || Semestre < 1 || Semestre > 10 || string.IsNullOrEmpty(Codigo) || string.IsNullOrEmpty(Horas))
-            {
-                // Puedes mostrar un mensaje de error si quieres
-                TempData["Error"] = "Por favor completa todos los campos correctamente.";
-                return RedirectToAction("Materias");
-            }
-
-            using (var connection = new SQLiteConnection(_configuration.GetConnectionString("DefaultConnection")))
-            {
-                connection.Open();
-
-                string query = @"
-            INSERT INTO Materias (Nombre, Carrera, Semestre, Codigo, Horas)
-            VALUES (@Nombre, @Carrera, @Semestre, @Codigo, @Horas)";
-
-                connection.Execute(query, new { Nombre, Carrera, Semestre, Codigo, Horas });
-            }
-
-            return RedirectToAction("Materias");
-        }
+        
 
         [HttpPost]
         public IActionResult EditarMateria(int id, string Nombre, string Carrera, int? Semestre, string Codigo, string Horas)
@@ -248,7 +226,7 @@ namespace SistemaUniversitarioWeb.Controllers
 
 
         [HttpPost]
-        public IActionResult EditarHorario(int Id, int Grupo, int CantEstudiantes, string Dia, string HoraInicio, string HoraFin, int DocenteId)
+        public IActionResult EditarHorario(int Id, int Grupo, int CantEstudiantes, string Dia, string HoraInicio, string HoraFin)
         {
             try
             {
@@ -256,43 +234,23 @@ namespace SistemaUniversitarioWeb.Controllers
                 {
                     connection.Open();
 
-                    // Obtener MateriaId desde el horario
-                    var materiaId = connection.QueryFirstOrDefault<int>(
-                        "SELECT MateriaId FROM Horarios WHERE Id = @Id",
-                        new { Id });
-
-                    if (materiaId == 0)
-                        throw new Exception("No se encontró la materia asociada.");
-
-                    // 1. Actualizar Horario
-                    var queryHorario = @"
+                    var query = @"
                 UPDATE Horarios
-                SET Grupo = @Grupo,
+                SET 
+                    Grupo = @Grupo,
                     CantEstudiantes = @CantEstudiantes,
                     Dia = @Dia,
                     HoraInicio = @HoraInicio,
                     HoraFin = @HoraFin
                 WHERE Id = @Id";
 
-                    connection.Execute(queryHorario, new { Id, Grupo, CantEstudiantes, Dia, HoraInicio, HoraFin });
+                    var rowsAffected = connection.Execute(query, new { Id, Grupo, CantEstudiantes, Dia, HoraInicio, HoraFin });
 
-                    // 2. Actualizar DocenteMateria si se cambió el docente
-                    var docenteActual = connection.QueryFirstOrDefault<int>(
-                        "SELECT DocenteId FROM DocenteMateria WHERE MateriaId = @MateriaId",
-                        new { MateriaId = materiaId });
-
-                    if (DocenteId > 0 && DocenteId != docenteActual)
-                    {
-                        var queryDocenteMateria = @"
-                    UPDATE DocenteMateria
-                    SET DocenteId = @DocenteId
-                    WHERE MateriaId = @MateriaId";
-
-                        connection.Execute(queryDocenteMateria, new { MateriaId = materiaId, DocenteId });
-                    }
-
-                    return Json(new { success = true, message = "Horario y docente actualizados exitosamente." });
+                    if (rowsAffected == 0)
+                        throw new Exception("No se encontró el registro con ese ID");
                 }
+
+                return Json(new { success = true, message = "Horario actualizado exitosamente." });
             }
             catch (Exception ex)
             {
